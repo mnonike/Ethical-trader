@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicalTrader – Grow Your Business Responsibly</title>
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .spinner.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .spinner-circle {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(0, 255, 200, 0.2);
+      border-top-color: #00ffcc;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .spinner-text {
+      color: #00ffcc;
+      font-size: 1.2rem;
+    }
+
+    /* Intro Screens */
+    .intro-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f2027;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .intro-screen.logo {
+      background: #0f2027;
+      animation: fadeOut 1s ease 1.5s forwards;
+    }
+
+    .intro-screen.welcome {
+      background: #203a43;
+      animation: fadeOut 1s ease 3s forwards;
+      opacity: 0;
+      animation-delay: 1.5s;
+    }
+
+    .intro-screen h1 {
+      font-size: 2.5em;
+      color: #00ff88;
+      margin-bottom: 1rem;
+      text-align: center;
+      animation: pulse 2s infinite;
+    }
+
+    .intro-screen p {
+      font-size: 1.1em;
+      color: #ccc;
+      max-width: 600px;
+      text-align: center;
+      line-height: 1.6;
+      padding: 0 1rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    /* Main Form Container */
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100%;
+      padding: 2rem;
+      opacity: 0;
+      animation: slideIn 0.8s ease 3s forwards;
+    }
+
+    /* Progress Steps */
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .progress-steps::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-50%);
+      z-index: -1;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 4px;
+      background: #00ffcc;
+      transform: translateY(-50%);
+      transition: width 0.4s ease;
+      z-index: -1;
+    }
+
+    .step {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #ccc;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .step.active {
+      background: #00ffcc;
+      color: #000;
+    }
+
+    .step.completed {
+      background: #00cc99;
+      color: #000;
+    }
+
+    /* Form Styles */
+    .form-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+      width: 100%;
+      max-width: 600px;
+      transition: all 0.5s ease;
+    }
+
+    .form-stage {
+      display: none;
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .form-stage.active {
+      display: block;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #00ffcc;
+      text-align: center;
+    }
+
+    /* Profile Picture Upload */
+    .profile-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      margin-bottom: 1rem;
+      border: 3px solid rgba(0, 255, 200, 0.3);
+      position: relative;
+    }
+
+    .profile-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .profile-preview::before {
+      content: 'No Image';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ccc;
+      font-size: 0.9rem;
+    }
+
+    .profile-preview.has-image::before {
+      display: none;
+    }
+
+    .upload-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(0, 255, 200, 0.2);
+      color: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #ddd;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 0 2px rgba(0, 255, 200, 0.3);
+    }
+
+    input::placeholder {
+      color: #aaa;
+    }
+
+    /* Checkbox Styles */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+    }
+
+    /* Form Navigation */
+    .form-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.7rem 1.3rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .btn-prev {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .btn-next, .btn-submit {
+      background: #00ffcc;
+      color: #000;
+    }
+
+    .btn-submit {
+      width: 100%;
+    }
+
+    /* Preview Section */
+    .preview-section {
+      margin-bottom: 1rem;
+      padding: 0.8rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    .preview-section h3 {
+      color: #00ffcc;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .preview-item {
+      display: flex;
+      margin-bottom: 0.3rem;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .preview-label {
+      font-weight: bold;
+      color: #00ffcc;
+      min-width: 100px;
+      margin-right: 0.5rem;
+    }
+
+    .preview-value {
+      color: #fff;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+        animation: slideIn 0.8s ease 2.7s forwards;
+      }
+
+      .form-container {
+        padding: 1rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .profile-preview {
+        width: 80px;
+        height: 80px;
+      }
+
+      .preview-item {
+        flex-direction: column;
+      }
+
+      .preview-label {
+        min-width: auto;
+        margin-bottom: 0.2rem;
+      }
+
+      .progress-steps {
+        margin-bottom: 1.5rem;
+      }
+
+      .step {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+      }
+
+      input, select, textarea {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+      }
+
+      .btn {
+        padding: 0.6rem 1rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .intro-screen h1 {
+        font-size: 2rem;
+      }
+
+      .intro-screen p {
+        font-size: 1rem;
+      }
+
+      .preview-label, .preview-value {
+        font-size: 0.8rem;
+      }
+
+      .preview-section h3 {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Spinner -->
+  <div class="spinner" id="loadingSpinner">
+    <div class="spinner-circle"></div>
+    <div class="spinner-text">Processing your information...</div>
+  </div>
+
+  <!-- Intro Screens -->
+  <div class="intro-screen logo">
+    <h1>EthicalTrader</h1>
+    <p>Empowering responsible business growth</p>
+  </div>
+
+  <div class="intro-screen welcome">
+    <h1>Welcome</h1>
+    <p>Join our community of ethical traders committed to sustainable business practices</p>
+  </div>
+
+  <!-- Main Form -->
+  <div class="container">
+    <div class="progress-steps">
+      <div class="progress-bar" id="progressBar"></div>
+      <div class="step active" id="step1">1</div>
+      <div class="step" id="step2">2</div>
+      <div class="step" id="step3">3</div>
+      <div class="step" id="step4">4</div>
+    </div>
+
+    <div class="form-container">
+      <!-- Stage 1: Personal Info -->
+      <div class="form-stage active" id="stage1">
+        <h2>Personal Information</h2>
+        
+        <div class="profile-upload">
+          <div class="profile-preview" id="profilePreview">
+            <img id="profileImage" alt="Profile Preview">
+          </div>
+          <button type="button" class="upload-btn" onclick="document.getElementById('profilePic').click()">Upload Profile Picture</button>
+          <input type="file" id="profilePic" accept="image/*" style="display: none;" onchange="previewImage(this)">
+        </div>
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="education">Educational Background</label>
+          <select id="education" required>
+            <option value="" disabled selected>Select your education level</option>
+            <option value="Uneducated">Uneducated</option>
+            <option value="Primary School">Primary School</option>
+            <option value="Secondary School Graduate">Secondary School Graduate</option>
+            <option value="SSCE">SSCE</option>
+            <option value="OND">OND</option>
+            <option value="HND">HND</option>
+            <option value="BSc">BSc</option>
+            <option value="MSc">MSc</option>
+            <option value="PhD">PhD</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" placeholder="e.g. 08012345678" required>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-next" onclick="nextStage()">Next</button>
+        </div>
+      </div>
+
+      <!-- Stage 2: Business Info -->
+      <div class="form-stage" id="stage2">
+        <h2>Business Information</h2>
+
+        <div class="form-group">
+          <label for="businessType">Type of Business</label>
+          <select id="businessType" required>
+            <option value="" disabled selected>Select your business type</option>
+            <option value="Retail">Retail</option>
+            <option value="Wholesale">Wholesale</option>
+            <option value="Service">Service</option>
+            <option value="Manufacturing">Manufacturing</option>
+            <option value="Agriculture">Agriculture</option>
+            <option value="Food">Food & Beverage</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Tech">Technology</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="monthlyIncome">Monthly Income (₦)</label>
+          <select id="monthlyIncome" required>
+            <option value="" disabled selected>Select income range</option>
+            <option value="20,000 - 70,000">₦20,000 - ₦70,000</option>
+            <option value="100,000 - 170,000">₦100,000 - ₦170,000</option>
+            <option value="200,000 - 500,000">₦200,000 - ₦500,000</option>
+            <option value="500,000 - 1,000,000">₦500,000 - ₦1,000,000</option>
+            <option value="Above 1,000,000">Above ₦1,000,000</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="state">State</label>
+          <select id="state" required onchange="updateLGAs()">
+            <option value="" disabled selected>Select your state</option>
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+            <option value="Kano">Kano</option>
+            <option value="Rivers">Rivers</option>
+            <option value="Oyo">Oyo</option>
+            <option value="Enugu">Enugu</option>
+            <option value="Kaduna">Kaduna</option>
+            <option value="Delta">Delta</option>
+            <option value="Ogun">Ogun</option>
+            <option value="Anambra">Anambra</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="lga">Local Government Area</label>
+          <select id="lga" required disabled>
+            <option value="" disabled selected>Select your LGA</option>
+          </select>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-prev" onclick="prevStage()">Previous</button>
+          <button type="button" class="btn btn-next" onclick="nextStage()">Next</button>
+        </div>
+      </div>
+
+      <!-- Stage 3: Business Details -->
+      <div class="form-stage" id="stage3">
+        <h2>Business Details</h2>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="Enter your business email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="businessName">Business Name</label>
+          <input type="text" id="businessName" placeholder="Enter your business name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="businessAddress">Business Address</label>
+          <textarea id="businessAddress" rows="3" placeholder="Enter your business address" required></textarea>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="googleBusiness">
+          <label for="googleBusiness">My business is registered on Google Maps</label>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-prev" onclick="prevStage()">Previous</button>
+          <button type="button" class="btn btn-next" onclick="nextStage()">Next</button>
+        </div>
+      </div>
+
+      <!-- Stage 4: Preview & Submit -->
+      <div class="form-stage" id="stage4">
+        <h2>Review Your Information</h2>
+
+        <div class="preview-section">
+          <h3>Personal Information</h3>
+          <div class="preview-item">
+            <div class="preview-label">Full Name:</div>
+            <div class="preview-value" id="previewName"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Education:</div>
+            <div class="preview-value" id="previewEducation"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Phone:</div>
+            <div class="preview-value" id="previewPhone"></div>
+          </div>
+        </div>
+
+        <div class="preview-section">
+          <h3>Business Information</h3>
+          <div class="preview-item">
+            <div class="preview-label">Business Type:</div>
+            <div class="preview-value" id="previewBusinessType"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Monthly Income:</div>
+            <div class="preview-value" id="previewIncome"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Location:</div>
+            <div class="preview-value" id="previewLocation"></div>
+          </div>
+        </div>
+
+        <div class="preview-section">
+          <h3>Business Details</h3>
+          <div class="preview-item">
+            <div class="preview-label">Email:</div>
+            <div class="preview-value" id="previewEmail"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Business Name:</div>
+            <div class="preview-value" id="previewBusinessName"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Address:</div>
+            <div class="preview-value" id="previewAddress"></div>
+          </div>
+          <div class="preview-item">
+            <div class="preview-label">Google Maps:</div>
+            <div class="preview-value" id="previewGoogleBusiness"></div>
+          </div>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-prev" onclick="prevStage()">Previous</button>
+          <button type="button" class="btn btn-submit" onclick="submitForm()">Submit & Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+       // Function to convert image to base64
+    function convertImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Load user data when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is already logged in
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            window.location.href = 'homepage.html';
+            return;
+        }
+
+        updateProgress();
+    });
+
+    // Update profile function
+    async function updateProfile() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const businessName = document.getElementById('businessName').value;
+        const businessType = document.getElementById('businessType').value;
+        const profilePicInput = document.getElementById('profilePic');
+
+        // Basic validation
+        if (!name || !email || !businessName || !businessType) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        // Convert image to base64 if uploaded
+        let profilePicBase64 = '';
+        if (profilePicInput.files[0]) {
+            try {
+                profilePicBase64 = await convertImageToBase64(profilePicInput.files[0]);
+            } catch (error) {
+                console.error('Error converting image:', error);
+                alert('Error uploading image. Please try again.');
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    phone,
+                    businessName,
+                    businessType,
+                    profilePic: profilePicBase64,
+                    password: 'defaultPassword' // In a real app, you'd have proper password handling
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Store user data in localStorage
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                window.location.href = 'homepage.html';
+            } else {
+                alert(data.error || 'Failed to register');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+
+    // Login function
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alert('Please enter both email and password');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Store user data in localStorage
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                window.location.href = 'homepage.html';
+            } else {
+                alert(data.error || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+    // Form navigation
+    let currentStage = 1;
+    const totalStages = 4;
+    let profilePicBase64 = null;
+
+    // LGA data
+    const lgaData = {
+      'Lagos': ['Agege', 'Ajeromi-Ifelodun', 'Alimosho', 'Amuwo-Odofin', 'Apapa', 'Badagry', 'Epe', 'Eti-Osa', 'Ibeju-Lekki', 'Ifako-Ijaiye', 'Ikeja', 'Ikorodu', 'Kosofe', 'Lagos Island', 'Lagos Mainland', 'Mushin', 'Ojo', 'Oshodi-Isolo', 'Shomolu', 'Surulere'],
+      'Abuja': ['Abaji', 'Bwari', 'Gwagwalada', 'Kuje', 'Kwali', 'Municipal Area Council'],
+      'Kano': ['Ajingi', 'Albasu', 'Bagwai', 'Bebeji', 'Bichi', 'Bunkure', 'Dala', 'Dambatta', 'Dawakin Kudu', 'Dawakin Tofa', 'Doguwa', 'Fagge', 'Gabasawa', 'Garko', 'Garun Mallam', 'Gaya', 'Gezawa', 'Gwale', 'Gwarzo', 'Kabo', 'Kano Municipal', 'Karaye', 'Kibiya', 'Kiru', 'Kumbotso', 'Kunchi', 'Kura', 'Madobi', 'Makoda', 'Minjibir', 'Nasarawa', 'Rano', 'Rimin Gado', 'Rogo', 'Shanono', 'Sumaila', 'Takai', 'Tarauni', 'Tofa', 'Tsanyawa', 'Tudun Wada', 'Ungogo', 'Warawa', 'Wudil'],
+      'Rivers': ['Abua/Odual', 'Ahoada East', 'Ahoada West', 'Akuku-Toru', 'Andoni', 'Asari-Toru', 'Bonny', 'Degema', 'Eleme', 'Emuoha', 'Etche', 'Gokana', 'Ikwerre', 'Khana', 'Obio/Akpor', 'Ogba/Egbema/Ndoni', 'Ogu/Bolo', 'Okrika', 'Omuma', 'Opobo/Nkoro', 'Oyigbo', 'Port Harcourt', 'Tai'],
+      'Oyo': ['Afijio', 'Akinyele', 'Atiba', 'Atisbo', 'Egbeda', 'Ibadan North', 'Ibadan North-East', 'Ibadan North-West', 'Ibadan South-East', 'Ibadan South-West', 'Ibarapa Central', 'Ibarapa East', 'Ibarapa North', 'Ido', 'Irepo', 'Iseyin', 'Itesiwaju', 'Iwajowa', 'Kajola', 'Lagelu', 'Ogbomosho North', 'Ogbomosho South', 'Ogo Oluwa', 'Olorunsogo', 'Oluyole', 'Ona Ara', 'Orelope', 'Ori Ire', 'Oyo East', 'Oyo West', 'Saki East', 'Saki West', 'Surulere'],
+      'Enugu': ['Aninri', 'Awgu', 'Enugu East', 'Enugu North', 'Enugu South', 'Ezeagu', 'Igbo Etiti', 'Igbo Eze North', 'Igbo Eze South', 'Isi Uzo', 'Nkanu East', 'Nkanu West', 'Nsukka', 'Oji River', 'Udenu', 'Udi', 'Uzo-Uwani'],
+      'Kaduna': ['Birnin Gwari', 'Chikun', 'Giwa', 'Igabi', 'Ikara', 'Jaba', 'Jema\'a', 'Kachia', 'Kaduna North', 'Kaduna South', 'Kagarko', 'Kajuru', 'Kaura', 'Kauru', 'Kubau', 'Kudan', 'Lere', 'Makarfi', 'Sabon Gari', 'Sanga', 'Soba', 'Zangon Kataf', 'Zaria'],
+      'Delta': ['Aniocha North', 'Aniocha South', 'Bomadi', 'Burutu', 'Ethiope East', 'Ethiope West', 'Ika North East', 'Ika South', 'Isoko North', 'Isoko South', 'Ndokwa East', 'Ndokwa West', 'Okpe', 'Oshimili North', 'Oshimili South', 'Patani', 'Sapele', 'Udu', 'Ughelli North', 'Ughelli South', 'Ukwuani', 'Uvwie', 'Warri North', 'Warri South', 'Warri South West'],
+      'Ogun': ['Abeokuta North', 'Abeokuta South', 'Ado-Odo/Ota', 'Egbado North', 'Egbado South', 'Ewekoro', 'Ifo', 'Ijebu East', 'Ijebu North', 'Ijebu North East', 'Ijebu Ode', 'Ikenne', 'Imeko Afon', 'Ipokia', 'Obafemi Owode', 'Odeda', 'Odogbolu', 'Ogun Waterside', 'Remo North', 'Shagamu'],
+      'Anambra': ['Aguata', 'Anambra East', 'Anambra West', 'Anaocha', 'Awka North', 'Awka South', 'Ayamelum', 'Dunukofia', 'Ekwusigo', 'Idemili North', 'Idemili South', 'Ihiala', 'Njikoka', 'Nnewi North', 'Nnewi South', 'Ogbaru', 'Onitsha North', 'Onitsha South', 'Orumba North', 'Orumba South', 'Oyi']
+    };
+
+    function updateLGAs() {
+      const stateSelect = document.getElementById('state');
+      const lgaSelect = document.getElementById('lga');
+      const selectedState = stateSelect.value;
+
+      lgaSelect.innerHTML = '<option value="" disabled selected>Select your LGA</option>';
+      
+      if (selectedState) {
+        lgaSelect.disabled = false;
+        lgaData[selectedState].forEach(lga => {
+          const option = document.createElement('option');
+          option.value = lga;
+          option.textContent = lga;
+          lgaSelect.appendChild(option);
+        });
+      } else {
+        lgaSelect.disabled = true;
+      }
+    }
+
+    // Profile picture preview
+    function previewImage(input) {
+      const preview = document.getElementById('profilePreview');
+      const image = document.getElementById('profileImage');
+      
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          profilePicBase64 = e.target.result;
+          image.src = profilePicBase64;
+          image.style.display = 'block';
+          preview.classList.add('has-image');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Navigation functions
+    function updateProgress() {
+      const progressBar = document.getElementById('progressBar');
+      const progressPercentage = ((currentStage - 1) / (totalStages - 1)) * 100;
+      progressBar.style.width = `${progressPercentage}%`;
+      
+      for (let i = 1; i <= totalStages; i++) {
+        const step = document.getElementById(`step${i}`);
+        if (i < currentStage) {
+          step.classList.remove('active');
+          step.classList.add('completed');
+        } else if (i === currentStage) {
+          step.classList.add('active');
+          step.classList.remove('completed');
+        } else {
+          step.classList.remove('active', 'completed');
+        }
+      }
+    }
+
+    function validateStage(stage) {
+      let isValid = true;
+      
+      if (stage === 1) {
+        const name = document.getElementById('name').value;
+        const education = document.getElementById('education').value;
+        const phone = document.getElementById('phone').value;
+        
+        if (!name || !education || !phone) {
+          alert('Please fill all required fields in Personal Information.');
+          isValid = false;
+        }
+      } else if (stage === 2) {
+        const businessType = document.getElementById('businessType').value;
+        const monthlyIncome = document.getElementById('monthlyIncome').value;
+        const state = document.getElementById('state').value;
+        const lga = document.getElementById('lga').value;
+        
+        if (!businessType || !monthlyIncome || !state || !lga) {
+          alert('Please fill all required fields in Business Information.');
+          isValid = false;
+        }
+      } else if (stage === 3) {
+        const email = document.getElementById('email').value;
+        const businessName = document.getElementById('businessName').value;
+        const businessAddress = document.getElementById('businessAddress').value;
+        
+        if (!email || !businessName || !businessAddress) {
+          alert('Please fill all required fields in Business Details.');
+          isValid = false;
+        } else if (!validateEmail(email)) {
+          alert('Please enter a valid email address.');
+          isValid = false;
+        }
+      }
+      
+      return isValid;
+    }
+
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function nextStage() {
+      if (!validateStage(currentStage)) return;
+      
+      if (currentStage < totalStages) {
+        document.getElementById(`stage${currentStage}`).classList.remove('active');
+        currentStage++;
+        document.getElementById(`stage${currentStage}`).classList.add('active');
+        updateProgress();
+        
+        if (currentStage === 4) {
+          updatePreview();
+        }
+      }
+    }
+
+    function prevStage() {
+      if (currentStage > 1) {
+        document.getElementById(`stage${currentStage}`).classList.remove('active');
+        currentStage--;
+        document.getElementById(`stage${currentStage}`).classList.add('active');
+        updateProgress();
+      }
+    }
+
+    function updatePreview() {
+      document.getElementById('previewName').textContent = document.getElementById('name').value;
+      document.getElementById('previewEducation').textContent = document.getElementById('education').value;
+      document.getElementById('previewPhone').textContent = document.getElementById('phone').value;
+      
+      document.getElementById('previewBusinessType').textContent = document.getElementById('businessType').value;
+      document.getElementById('previewIncome').textContent = document.getElementById('monthlyIncome').value;
+      document.getElementById('previewLocation').textContent = 
+        `${document.getElementById('lga').value}, ${document.getElementById('state').value}`;
+      
+      document.getElementById('previewEmail').textContent = document.getElementById('email').value;
+      document.getElementById('previewBusinessName').textContent = document.getElementById('businessName').value;
+      document.getElementById('previewAddress').textContent = document.getElementById('businessAddress').value;
+      document.getElementById('previewGoogleBusiness').textContent = 
+        document.getElementById('googleBusiness').checked ? 'Yes' : 'No';
+    }
+
+    async function submitForm() {
+      if (!validateStage(4)) return;
+      
+      document.getElementById('loadingSpinner').classList.add('active');
+      
+      const userData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        education: document.getElementById('education').value,
+        businessType: document.getElementById('businessType').value,
+        monthlyIncome: document.getElementById('monthlyIncome').value,
+        state: document.getElementById('state').value,
+        lga: document.getElementById('lga').value,
+        businessName: document.getElementById('businessName').value,
+        businessAddress: document.getElementById('businessAddress').value,
+        googleBusiness: document.getElementById('googleBusiness').checked,
+        profilePic: profilePicBase64
+      };
+
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Store user data in localStorage
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+          
+          // Redirect to homepage after successful registration
+          window.location.href = 'homepage.html';
+        } else {
+          alert(data.error || 'Registration failed. Please try again.');
+          document.getElementById('loadingSpinner').classList.remove('active');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        document.getElementById('loadingSpinner').classList.remove('active');
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateProgress();
+    });
+    async function showAdminLogin() {
+    const username = prompt('Enter admin username:');
+    if (!username) return;
+    
+    const password = prompt('Enter admin password:');
+    if (!password) return;
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        localStorage.setItem('adminToken', data.token);
+        window.location.href = 'admin.html';
+      } else {
+        alert(data.error || 'Admin login failed');
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      alert('An error occurred. Please try again.');
+    }
+  }
+  </script>
+</body>
+</html>

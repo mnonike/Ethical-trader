@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management – EthicalTrader</title>
+  <style>
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      background: #f5f7fa;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      padding: 1.5rem 1rem;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #00ffcc;
+    }
+
+    .container {
+      padding: 1.5rem 1rem;
+      padding-bottom: 80px;
+    }
+
+    .stats-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .stats-card h3 {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-card .value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #0f2027;
+    }
+
+    .form-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .form-title {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      color: #0f2027;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .form-control:focus {
+      border-color: #00aa77;
+      outline: none;
+    }
+
+    .price-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .image-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .image-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #00aa77, #00cc99);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-submit:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 15px 20px;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateX(120%);
+      transition: transform 0.3s ease-in-out;
+      max-width: 300px;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast.success {
+      background-color: #00aa77;
+    }
+
+    .toast.error {
+      background-color: #e74c3c;
+    }
+
+    .toast.warning {
+      background-color: #f39c12;
+    }
+
+    .toast.info {
+      background-color: #3498db;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-left: 15px;
+      padding: 0;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.8rem 0;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #666;
+      transition: all 0.3s ease;
+      flex: 1;
+      max-width: 20%;
+    }
+
+    .nav-item.active {
+      color: #00aa77;
+      transform: translateY(-3px);
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .nav-item span {
+      font-size: 0.7rem;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        align-items: center;
+      }
+      
+      .toast {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>Inventory Management</h1>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Inventory Stats -->
+    <div class="stats-card">
+      <h3>Total Items in Stock</h3>
+      <div class="value" id="totalStockValue">0</div>
+    </div>
+
+    <!-- Inventory Form -->
+    <div class="form-container">
+      <h2 class="form-title">Add New Item</h2>
+      
+      <form id="inventoryForm">
+        <div class="form-group">
+          <label for="itemImage">Item Image</label>
+          <div class="image-upload" onclick="document.getElementById('itemImage').click()">
+            <span>Click to upload image</span>
+            <img id="imagePreview" class="image-preview" src="#" alt="Preview">
+            <input type="file" id="itemImage" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <div id="imageError" class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="itemName">Item Name</label>
+          <input type="text" id="itemName" class="form-control" placeholder="e.g. Basmati Rice" required>
+          <div id="nameError" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="itemCategory">Category</label>
+          <select id="itemCategory" class="form-control" required>
+            <option value="">Select Category</option>
+            <option value="food">Food Items</option>
+            <option value="beverages">Beverages</option>
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing</option>
+            <option value="household">Household Items</option>
+          </select>
+          <div id="categoryError" class="error-message"></div>
+        </div>
+
+        <div class="price-comparison">
+          <div class="form-group">
+            <label for="itemOriginalPrice">Original Price (₦)</label>
+            <input type="number" id="itemOriginalPrice" class="form-control" placeholder="e.g. 12000" min="0" step="0.01" required>
+            <div id="originalPriceError" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="itemSellingPrice">Selling Price (₦)</label>
+            <input type="number" id="itemSellingPrice" class="form-control" placeholder="e.g. 15000" min="0" step="0.01" required>
+            <div id="sellingPriceError" class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="itemStock">Quantity Available</label>
+          <input type="number" id="itemStock" class="form-control" placeholder="e.g. 50" min="0" required>
+          <div id="stockError" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="itemDesc">Description (Optional)</label>
+          <textarea id="itemDesc" class="form-control" rows="3" placeholder="Add any details about this item..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Add to Inventory
+          <div class="loading-spinner" id="loadingSpinner"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="homepage.html" class="nav-item">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="post-items.html" class="nav-item active">
+      <span>📦</span>
+      <span>Inventory</span>
+    </a>
+    <a href="markets.html" class="nav-item">
+      <span>🏪</span>
+      <span>Markets</span>
+    </a>
+    <a href="analysis.html" class="nav-item">
+      <span>📊</span>
+      <span>Analysis</span>
+    </a>
+    <a href="stock-analysis.html" class="nav-item">
+      <span>📈</span>
+      <span>Stock analysis</span>
+    </a>
+    <a href="settings.html" class="nav-item">
+      <span>⚙️</span>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Toast notification function
+    function showToast(message, type = 'success', duration = 5000) {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Force reflow to trigger animation
+      void toast.offsetWidth;
+      
+      toast.classList.add('show');
+      
+      // Auto dismiss after duration
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // Improved image upload handler
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      const output = document.getElementById('imagePreview');
+      const errorElement = document.getElementById('imageError');
+      
+      if (!file) return;
+      
+      // Reset error state
+      errorElement.style.display = 'none';
+      
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        errorElement.textContent = 'Image size should be less than 5MB';
+        errorElement.style.display = 'block';
+        showToast('Image size should be less than 5MB', 'error');
+        return;
+      }
+      
+      // Validate file type (any image format)
+      if (!file.type.match('image.*')) {
+        errorElement.textContent = 'Please upload an image file';
+        errorElement.style.display = 'block';
+        showToast('Please upload an image file', 'error');
+        return;
+      }
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        output.src = e.target.result;
+        output.style.display = 'block';
+        event.target.parentElement.querySelector('span').textContent = 'Change Image';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Function to convert image to base64 with better error handling
+    function convertImageToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(new Error('Failed to read image file'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Clear error messages when user starts typing
+    document.querySelectorAll('.form-control').forEach(input => {
+      input.addEventListener('input', function() {
+        const errorId = this.id + 'Error';
+        const errorElement = document.getElementById(errorId);
+        if (errorElement) {
+          errorElement.style.display = 'none';
+        }
+      });
+    });
+
+    // Form submission with improved error handling
+    document.getElementById('inventoryForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Get form elements
+      const itemName = document.getElementById('itemName').value.trim();
+      const itemCategory = document.getElementById('itemCategory').value;
+      const itemOriginalPrice = document.getElementById('itemOriginalPrice').value;
+      const itemSellingPrice = document.getElementById('itemSellingPrice').value;
+      const itemStock = document.getElementById('itemStock').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const loadingSpinner = document.getElementById('loadingSpinner');
+
+      // Validate form
+      let isValid = true;
+
+      if (!itemName) {
+        document.getElementById('nameError').textContent = 'Item name is required';
+        document.getElementById('nameError').style.display = 'block';
+        isValid = false;
+      }
+
+      if (!itemCategory) {
+        document.getElementById('categoryError').textContent = 'Category is required';
+        document.getElementById('categoryError').style.display = 'block';
+        isValid = false;
+      }
+
+      if (!itemOriginalPrice || parseFloat(itemOriginalPrice) <= 0) {
+        document.getElementById('originalPriceError').textContent = 'Original price must be greater than 0';
+        document.getElementById('originalPriceError').style.display = 'block';
+        isValid = false;
+      }
+
+      if (!itemSellingPrice || parseFloat(itemSellingPrice) <= 0) {
+        document.getElementById('sellingPriceError').textContent = 'Selling price must be greater than 0';
+        document.getElementById('sellingPriceError').style.display = 'block';
+        isValid = false;
+      }
+
+      if (!itemStock || parseInt(itemStock) < 0) {
+        document.getElementById('stockError').textContent = 'Quantity must be 0 or more';
+        document.getElementById('stockError').style.display = 'block';
+        isValid = false;
+      }
+
+      if (!isValid) {
+        showToast('Please fill all required fields correctly', 'error');
+        return;
+      }
+
+      // Disable submit button and show loading spinner
+      submitBtn.disabled = true;
+      loadingSpinner.style.display = 'inline-block';
+
+      try {
+        // Convert image to base64 if uploaded
+        let itemImageBase64 = '';
+        const imageFile = document.getElementById('itemImage').files[0];
+        
+        if (imageFile) {
+          try {
+            itemImageBase64 = await convertImageToBase64(imageFile);
+          } catch (error) {
+            console.error('Image conversion error:', error);
+            showToast('Failed to process image. Please try another image.', 'error');
+            return;
+          }
+        }
+
+        const itemData = {
+          name: itemName,
+          category: itemCategory,
+          originalPrice: parseFloat(itemOriginalPrice),
+          sellingPrice: parseFloat(itemSellingPrice),
+          stock: parseInt(itemStock),
+          description: document.getElementById('itemDesc').value.trim(),
+          itemImage: itemImageBase64
+        };
+
+        const response = await fetch('/api/items', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.id}`
+          },
+          body: JSON.stringify(itemData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add item. Please try again.');
+        }
+
+        const data = await response.json();
+        
+        showToast(`Item "${data.item.name}" added successfully!`);
+        
+        // Update total stock count
+        const currentStock = parseInt(document.getElementById('totalStockValue').textContent);
+        const newStock = currentStock + data.item.stock;
+        document.getElementById('totalStockValue').textContent = newStock;
+        
+        // Reset form
+        this.reset();
+        document.getElementById('imagePreview').style.display = 'none';
+        document.querySelector('.image-upload span').textContent = 'Click to upload image';
+      } catch (error) {
+        console.error('Error:', error);
+        showToast(error.message || 'An error occurred. Please try again.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+      }
+    });
+
+    // Load initial data with retry mechanism
+    async function loadInitialData() {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Load inventory count with retry logic
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const response = await fetch('/api/items', {
+            headers: {
+              'Authorization': `Bearer ${currentUser.id}`
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to load inventory');
+          }
+          
+          const items = await response.json();
+          const totalStock = items.reduce((sum, item) => sum + (item.stock || 0), 0);
+          document.getElementById('totalStockValue').textContent = totalStock;
+          return; // Success - exit the function
+        } catch (error) {
+          retries--;
+          if (retries === 0) {
+            console.error('Error loading inventory after retries:', error);
+            showToast('Failed to load inventory data. Please refresh the page.', 'error');
+          } else {
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+    }
+
+    // Load initial data when page loads
+    document.addEventListener('DOMContentLoaded', loadInitialData);
+  </script>
+</body>
+</html>

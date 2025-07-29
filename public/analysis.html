@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EthicalTrader – Market Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: none;
+        }
+
+        body, html {
+            height: 100%;
+            background: #f5f7fa;
+            color: #333;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner-circle {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 255, 200, 0.2);
+            border-top-color: #00ffcc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .spinner-text {
+            color: #00ffcc;
+            font-size: 1rem;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2001;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00aa77, #00cc99);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            padding: 1rem 0.8rem;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .welcome-text h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.2rem;
+            color: #00ffcc;
+        }
+
+        .welcome-text p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .search-container {
+            padding: 0.8rem;
+            background: white;
+            margin: 0.8rem;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #00aa77;
+        }
+
+        .search-button {
+            padding: 0 1rem;
+            background: linear-gradient(135deg, #00aa77, #00cc99);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            min-width: 60px;
+        }
+
+        .container {
+            padding: 0.8rem;
+            padding-bottom: 70px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 180px);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            height: 100%;
+        }
+
+        .chart-container-wrapper {
+            position: relative;
+            z-index: 4;
+            background: #f5f7fa;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card.minimized {
+            padding: 0.4rem;
+            height: 60px;
+            width: 60px;
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 15;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            color: #0f2027;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            min-height: 150px;
+        }
+
+        .chart-card.minimized .chart-container {
+            height: 50px;
+            min-height: 50px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            font-size: 0.7rem;
+        }
+
+        .chart-card.minimized .legend {
+            display: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .update-info {
+            margin-top: 10px;
+            color: #777;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .chart-card.minimized .update-info {
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            margin: 0;
+            font-size: 0.6rem;
+            background: rgba(255,255,255,0.8);
+            padding: 1px 3px;
+            border-radius: 8px;
+        }
+
+        .results-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 70px;
+            background: white;
+            z-index: 20;
+            padding: 0.8rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 5;
+            padding-top: 0.5rem;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            margin-right: 0.8rem;
+            cursor: pointer;
+            color: #00aa77;
+            padding: 5px;
+        }
+
+        .results-title {
+            font-size: 1.1rem;
+            color: #0f2027;
+        }
+
+        .search-results {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .result-item {
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 0.8rem;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            background: #f9f9f9;
+        }
+
+        .result-image-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .result-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+
+        .result-image.loading {
+            opacity: 0;
+        }
+
+        .result-image.loaded {
+            opacity: 1;
+        }
+
+        .result-details {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .result-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+            color: #0f2027;
+            font-weight: 500;
+        }
+
+        .result-price {
+            font-size: 0.9rem;
+            color: #00aa77;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-description {
+            font-size: 0.8rem;
+            color: #666;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .result-source {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 0.3rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .price-trend {
+            font-size: 0.7rem;
+            color: #e74c3c;
+            margin-top: 0.2rem;
+        }
+
+        .price-trend.up {
+            color: #2ecc71;
+        }
+
+        .price-confidence {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #f1c40f;
+            color: white;
+            font-size: 0.6rem;
+            margin-left: 5px;
+        }
+
+        .image-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            color: #999;
+            font-size: 0.7rem;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.6rem 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #666;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 20%;
+            padding: 0.2rem;
+        }
+
+        .nav-item.active {
+            color: #00aa77;
+            transform: translateY(-2px);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .nav-item span {
+            font-size: 0.6rem;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            
+            .chart-title {
+                font-size: 0.8rem;
+            }
+            
+            .search-button {
+                padding: 0 0.8rem;
+                min-width: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                height: calc(100vh - 160px);
+            }
+            
+            .chart-container {
+                min-height: 120px;
+            }
+            
+            .result-item {
+                flex-direction: column;
+            }
+            
+            .result-image-container {
+                width: 100%;
+                height: 120px;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner" id="loadingSpinner">
+        <div class="spinner-circle"></div>
+        <div class="spinner-text">Initializing market data...</div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <header class="header">
+        <div class="profile-header">
+            <div class="welcome-text">
+                <h2 id="welcomeUsername">Market Analysis</h2>
+                <p>Real-time commodity market share</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search commodity prices..." autocomplete="off">
+            <button class="search-button" id="searchButton">Search</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="charts-grid">
+            <div class="chart-container-wrapper">
+                <div class="chart-card" id="chartCard">
+                    <h2 class="chart-title">
+                        <span>📊</span> Nigeria Commodity Market Share
+                    </h2>
+                    <div class="chart-container">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #3498db;"></div>
+                            <span>Rice</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #e74c3c;"></div>
+                            <span>Cocoa</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f1c40f;"></div>
+                            <span>Gold</span>
+                        </div>
+                    </div>
+                    <p class="update-info">Next update in: <span id="countdown">3</span>s</p>
+                </div>
+            </div>
+
+            <div class="chart-container-wrapper">
+                <div class="chart-card">
+                    <h2 class="chart-title">
+                        <span>📈</span> Top Commodities by Revenue
+                    </h2>
+                    <div class="chart-container">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                    <p class="update-info">Updated: Just now</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container" id="resultsContainer">
+        <div class="results-header">
+            <button class="back-button" id="backButton">←</button>
+            <h3 class="results-title">Search Results</h3>
+        </div>
+        
+        <div class="chart-card minimized" id="resultsChartCard">
+            <div class="chart-container">
+                <canvas id="resultsMarketChart"></canvas>
+            </div>
+            <p class="update-info">Next update in: <span id="resultsCountdown">3</span>s</p>
+        </div>
+        
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+<nav class="bottom-nav">
+  <a href="homepage.html" class="nav-item">
+    <span>🏠</span>
+    <span>Home</span>
+  </a>
+  <a href="post-items.html" class="nav-item">
+    <span>📦</span>
+    <span>Inventory</span>
+  </a>
+  <a href="markets.html" class="nav-item">
+    <span>🏪</span>
+    <span>Markets</span>
+  </a>
+  <a href="analysis.html" class="nav-item active">
+    <span>📊</span>
+    <span>Analysis</span>
+  </a>
+  <a href="stock-analysis.html" class="nav-item">
+    <span>📈</span>
+    <span>Stock analysis</span>
+  </a>
+  <a href="settings.html" class="nav-item">
+    <span>⚙️</span>
+    <span>Settings</span>
+  </a>
+</nav>
+
+   <script>
+        // Configuration
+        const CONFIG = {
+            API_KEY: 'AIzaSyBOzM40dL8BqeIZGwdjzFSp8gkjcKjyS18',
+            SEARCH_ENGINE_ID: '23cbaa9490a894d51',
+            PRICE_VARIATION_THRESHOLD: 0.15, // 15% variation allowed
+            MIN_PRICE_MATCHES: 2, // Minimum matching prices to show
+            SEARCH_LIMIT: 5, // Number of results per query
+            LOADING_MIN_TIME: 800, // Minimum loading time in ms
+            IMAGE_PLACEHOLDERS: [
+                'https://source.unsplash.com/random/80x80/?market',
+                'https://source.unsplash.com/random/80x80/?product',
+                'https://source.unsplash.com/random/80x80/?commodity',
+                'https://source.unsplash.com/random/80x80/?food',
+                'https://source.unsplash.com/random/80x80/?agriculture'
+            ]
+        };
+
+        // State management
+        const state = {
+            commodities: ['Rice', 'Cocoa', 'Gold', 'Fuel', 'Kerosene'],
+            colors: {
+                'Rice': '#3498db',
+                'Cocoa': '#e74c3c',
+                'Gold': '#f1c40f',
+                'Fuel': '#2ecc71',
+                'Kerosene': '#9b59b6'
+            },
+            economicStats: {
+                'Rice': { revenue: 450, growth: 12, demand: 95 },
+                'Cocoa': { revenue: 380, growth: 8, demand: 85 },
+                'Gold': { revenue: 520, growth: 15, demand: 75 },
+                'Fuel': { revenue: 680, growth: 5, demand: 100 },
+                'Kerosene': { revenue: 290, growth: 3, demand: 65 }
+            },
+            charts: {
+                market: null,
+                stats: null,
+                results: null
+            },
+            timers: {
+                countdown: null,
+                resultsCountdown: null,
+                marketUpdate: null,
+                resultsUpdate: null
+            },
+            search: {
+                active: false,
+                lastQuery: '',
+                results: []
+            },
+            loading: {
+                startTime: 0,
+                minTimeElapsed: false
+            }
+        };
+
+        // DOM Elements
+        const elements = {
+            loadingSpinner: document.getElementById('loadingSpinner'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressBar: document.getElementById('progressBar'),
+            welcomeUsername: document.getElementById('welcomeUsername'),
+            searchInput: document.getElementById('searchInput'),
+            searchButton: document.getElementById('searchButton'),
+            resultsContainer: document.getElementById('resultsContainer'),
+            backButton: document.getElementById('backButton'),
+            searchResults: document.getElementById('searchResults'),
+            chartCard: document.getElementById('chartCard'),
+            countdown: document.getElementById('countdown'),
+            resultsCountdown: document.getElementById('resultsCountdown')
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set loading start time
+            state.loading.startTime = Date.now();
+
+            // Load user data
+            loadUserData();
+
+            // Initialize charts
+            initializeCharts();
+
+            // Setup search functionality
+            setupSearch();
+
+            // Setup navigation
+            setupNavigation();
+
+            // Hide loading spinner after minimum time
+            setTimeout(() => {
+                state.loading.minTimeElapsed = true;
+                if (!state.search.active) {
+                    hideLoadingSpinner();
+                }
+            }, CONFIG.LOADING_MIN_TIME);
+        });
+
+        function loadUserData() {
+            const userName = 'Trader';
+            elements.welcomeUsername.textContent = 'Market Analysis';
+        }
+
+        function initializeCharts() {
+            // Market Chart
+            const marketCtx = document.getElementById('marketChart').getContext('2d');
+            state.charts.market = new Chart(marketCtx, {
+                type: 'pie',
+                data: generateMarketData(),
+                options: getChartOptions('pie')
+            });
+
+            // Stats Chart
+            const statsCtx = document.getElementById('statsChart').getContext('2d');
+            state.charts.stats = new Chart(statsCtx, {
+                type: 'bar',
+                data: generateStatsData(),
+                options: getChartOptions('bar')
+            });
+
+            // Results Chart
+            const resultsCtx = document.getElementById('resultsMarketChart').getContext('2d');
+            state.charts.results = new Chart(resultsCtx, {
+                type: 'pie',
+                data: generateMarketData(),
+                options: getChartOptions('pie', true)
+            });
+
+            // Start update cycles
+            startCountdown();
+            state.timers.marketUpdate = setTimeout(updateMarketChart, 3000);
+        }
+
+        function getChartOptions(type, forResults = false) {
+            const baseOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        bodyFont: {
+                            size: 10
+                        },
+                        titleFont: {
+                            size: 10
+                        }
+                    }
+                }
+            };
+
+            if (type === 'pie') {
+                baseOptions.plugins.tooltip.callbacks = {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${label}: ${percentage}% (₦${(value/1000).toLocaleString()}k)`;
+                    }
+                };
+                baseOptions.cutout = '55%';
+                baseOptions.borderRadius = 8;
+                baseOptions.spacing = 3;
+                baseOptions.rotation = -30;
+            } else if (type === 'bar') {
+                baseOptions.plugins.legend = {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 10
+                        },
+                        boxWidth: 12
+                    }
+                };
+                baseOptions.plugins.tooltip.callbacks = {
+                    label: function(context) {
+                        return `${context.dataset.label}: ₦${context.raw} billion`;
+                    }
+                };
+                baseOptions.scales = {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue (₦ billion)',
+                            font: {
+                                size: 10
+                            }
+                        },
+                        ticks: {
+                            font: {
+                                size: 9
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 9
+                            }
+                        }
+                    }
+                };
+            }
+
+            if (forResults) {
+                baseOptions.plugins.legend = { display: false };
+            }
+
+            return baseOptions;
+        }
+
+        function generateMarketData() {
+            const data = {};
+            let remaining = 100;
+            
+            state.commodities.forEach((commodity, index) => {
+                if (index === state.commodities.length - 1) {
+                    data[commodity] = remaining;
+                } else {
+                    const max = remaining * 0.7;
+                    const value = Math.floor(Math.random() * max) + 10;
+                    data[commodity] = value;
+                    remaining -= value;
+                }
+            });
+            
+            const multiplier = 50000 + Math.random() * 200000;
+            Object.keys(data).forEach(key => {
+                data[key] = Math.round(data[key] * multiplier);
+            });
+            
+            return {
+                labels: state.commodities,
+                datasets: [{
+                    data: state.commodities.map(c => data[c]),
+                    backgroundColor: state.commodities.map(c => state.colors[c]),
+                    borderColor: '#fff',
+                    borderWidth: 1
+                }]
+            };
+        }
+
+        function generateStatsData() {
+            return {
+                labels: state.commodities,
+                datasets: [
+                    {
+                        label: 'Annual Revenue',
+                        data: state.commodities.map(c => state.economicStats[c].revenue),
+                        backgroundColor: '#00aa77',
+                        borderColor: '#008855',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Growth Rate (%)',
+                        data: state.commodities.map(c => state.economicStats[c].growth),
+                        backgroundColor: '#3498db',
+                        borderColor: '#2980b9',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Demand Index',
+                        data: state.commodities.map(c => state.economicStats[c].demand),
+                        backgroundColor: '#f1c40f',
+                        borderColor: '#f39c12',
+                        borderWidth: 1
+                    }
+                ]
+            };
+        }
+
+        function updateMarketChart() {
+            if (!state.charts.market) return;
+            
+            const newData = generateMarketData();
+            state.charts.market.data.labels = newData.labels;
+            state.charts.market.data.datasets[0].data = newData.datasets[0].data;
+            state.charts.market.data.datasets[0].backgroundColor = newData.datasets[0].backgroundColor;
+            state.charts.market.update();
+            
+            countdown = 3;
+            elements.countdown.textContent = countdown;
+            
+            startCountdown();
+            state.timers.marketUpdate = setTimeout(updateMarketChart, 3000);
+        }
+
+        function updateResultsMarketChart() {
+            if (!state.charts.results) return;
+            
+            const newData = generateMarketData();
+            state.charts.results.data.labels = newData.labels;
+            state.charts.results.data.datasets[0].data = newData.datasets[0].data;
+            state.charts.results.data.datasets[0].backgroundColor = newData.datasets[0].backgroundColor;
+            state.charts.results.update();
+            
+            resultsCountdown = 3;
+            elements.resultsCountdown.textContent = resultsCountdown;
+            
+            startResultsCountdown();
+            state.timers.resultsUpdate = setTimeout(updateResultsMarketChart, 3000);
+        }
+
+        function startCountdown() {
+            clearInterval(state.timers.countdown);
+            countdown = 3;
+            elements.countdown.textContent = countdown;
+            
+            state.timers.countdown = setInterval(() => {
+                countdown--;
+                elements.countdown.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(state.timers.countdown);
+                }
+            }, 1000);
+        }
+
+        function startResultsCountdown() {
+            clearInterval(state.timers.resultsCountdown);
+            resultsCountdown = 3;
+            elements.resultsCountdown.textContent = resultsCountdown;
+            
+            state.timers.resultsCountdown = setInterval(() => {
+                resultsCountdown--;
+                elements.resultsCountdown.textContent = resultsCountdown;
+                if (resultsCountdown <= 0) {
+                    clearInterval(state.timers.resultsCountdown);
+                }
+            }, 1000);
+        }
+
+        function setupSearch() {
+            elements.searchButton.addEventListener('click', performSearch);
+            elements.searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performSearch();
+            });
+
+            elements.backButton.addEventListener('click', function() {
+                elements.resultsContainer.style.display = 'none';
+                elements.chartCard.classList.remove('minimized');
+            });
+        }
+
+        async function performSearch() {
+            const query = elements.searchInput.value.trim();
+            if (!query || query === state.search.lastQuery) return;
+
+            state.search.active = true;
+            state.search.lastQuery = query;
+            
+            showLoadingSpinner();
+            minimizeChart();
+            showResultsContainer();
+            
+            try {
+                const results = await searchPrices(query);
+                displaySearchResults(results, query);
+            } catch (error) {
+                console.error('Search error:', error);
+                elements.searchResults.innerHTML = `
+                    <div class="no-results">
+                        Error loading results. Please try again later.
+                    </div>
+                `;
+            } finally {
+                hideLoadingSpinner();
+                state.search.active = false;
+            }
+        }
+
+        async function searchPrices(query) {
+            showProgressBar();
+            
+            const searchQueries = [
+                `${query} current price Nigeria`,
+                `${query} market price today`,
+                `${query} wholesale price Lagos`,
+                `${query} commodity price per kg`
+            ];
+            
+            // Execute all searches in parallel
+            const searchPromises = searchQueries.map(searchQuery => 
+                axios.get(`https://www.googleapis.com/customsearch/v1`, {
+                    params: {
+                        q: searchQuery,
+                        cx: CONFIG.SEARCH_ENGINE_ID,
+                        key: CONFIG.API_KEY,
+                        num: CONFIG.SEARCH_LIMIT
+                    }
+                })
+            );
+            
+            const responses = await Promise.allSettled(searchPromises);
+            const successfulResults = responses
+                .filter(r => r.status === 'fulfilled' && r.value.data.items)
+                .map(r => r.value.data.items)
+                .flat();
+            
+            // Analyze prices across all results
+            const priceAnalysis = analyzePrices(successfulResults);
+            
+            return {
+                items: successfulResults,
+                priceAnalysis
+            };
+        }
+
+        function analyzePrices(items) {
+            const priceMap = new Map();
+            
+            items.forEach(item => {
+                const price = extractPrice(item.title) || extractPrice(item.snippet);
+                if (price) {
+                    // Round to nearest 100 to group similar prices
+                    const roundedPrice = Math.round(price.value / 100) * 100;
+                    priceMap.set(roundedPrice, (priceMap.get(roundedPrice) || 0) + 1);
+                }
+            });
+            
+            // Find the most common price that meets our threshold
+            let bestPrice = null;
+            let maxCount = 0;
+            
+            priceMap.forEach((count, price) => {
+                if (count > maxCount && count >= CONFIG.MIN_PRICE_MATCHES) {
+                    maxCount = count;
+                    bestPrice = price;
+                }
+            });
+            
+            return {
+                bestPrice,
+                confidence: maxCount > 0 ? Math.min(maxCount / 5, 1) : 0 // Scale confidence to 0-1
+            };
+        }
+
+        function extractPrice(text) {
+            if (!text) return null;
+            
+            // Enhanced price patterns focused on 3-4 digit Naira amounts
+            const pricePatterns = [
+                /(₦|N|NGN|Naira)\s*([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)/i,  // ₦ 1,000 - 9,999
+                /([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)\s*(₦|N|NGN|Naira)/i,    // 1,000 ₦ - 9,999 NGN
+                /(?:price|cost)\s*:\s*([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)/i, // Price: 1,000 - 9,999
+                /([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:per\s*(?:kg|ton|bag|unit|ltr))/i, // 1,000 per kg
+                /(?:₦|N|NGN|Naira)\s*([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?\s*-\s*[1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)/i, // ₦1,000-2,000
+                /([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)\s*to\s*[1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?/i, // 1,000 to 2,000
+                /(?:₦|N|NGN|Naira)\s*([1-9]\d{2,3}(?:,\d{3})*(?:\.\d{2})?)/i  // ₦1,000
+            ];
+            
+            for (const pattern of pricePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    for (let i = 1; i < match.length; i++) {
+                        if (match[i] && /\d/.test(match[i])) {
+                            const priceValue = parseFloat(match[i].replace(/,/g, ''));
+                            if (!isNaN(priceValue) && priceValue >= 100 && priceValue <= 9999) {
+                                return {
+                                    value: priceValue,
+                                    text: `₦${priceValue.toLocaleString('en-NG')}`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function displaySearchResults(results, query) {
+            const { items, priceAnalysis } = results;
+            
+            if (items.length === 0) {
+                elements.searchResults.innerHTML = `
+                    <div class="no-results">
+                        No results found for "${query}"
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            let displayedItems = 0;
+            
+            items.forEach(item => {
+                // Only show price if it matches the verified price (or show no price)
+                const itemPrice = extractPrice(item.title) || extractPrice(item.snippet);
+                const showPrice = priceAnalysis.bestPrice && itemPrice && 
+                    Math.abs(itemPrice.value - priceAnalysis.bestPrice) <= (priceAnalysis.bestPrice * CONFIG.PRICE_VARIATION_THRESHOLD);
+                
+                displayedItems++;
+                
+                // Get a random placeholder image
+                const randomPlaceholder = CONFIG.IMAGE_PLACEHOLDERS[
+                    Math.floor(Math.random() * CONFIG.IMAGE_PLACEHOLDERS.length)
+                ];
+                
+                html += `
+                    <div class="result-item" onclick="window.open('${item.link}', '_blank')">
+                        <div class="result-image-container">
+                            <div class="image-placeholder">Loading image...</div>
+                            <img src="${randomPlaceholder}" 
+                                 data-src="${item.link}" 
+                                 alt="${query}" 
+                                 class="result-image loading"
+                                 onerror="this.onerror=null;this.src='${randomPlaceholder}'">
+                        </div>
+                        <div class="result-details">
+                            <h3 class="result-title">${query} Market Data</h3>
+                            ${showPrice ? `
+                                <div class="result-price">
+                                    ${itemPrice.text}
+                                    ${priceAnalysis.confidence > 0.5 ? 
+                                        `<span class="price-confidence" title="Confidence level">${Math.round(priceAnalysis.confidence * 100)}%</span>` : 
+                                        ''}
+                                </div>
+                            ` : ''}
+                            <p class="result-description">${item.snippet || item.title || 'Click to view details'}</p>
+                            <div class="result-source">${new URL(item.link).hostname.replace('www.', '')}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (displayedItems === 0) {
+                html = `
+                    <div class="no-results">
+                        <p>Found ${items.length} results but couldn't verify pricing information.</p>
+                        <p>Try more specific searches like:</p>
+                        <ul style="text-align: left; margin-top: 10px;">
+                            <li>"${query} current price per kg in Lagos"</li>
+                            <li>"${query} wholesale price Nigeria 2023"</li>
+                            <li>"${query} commodity market price today"</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            elements.searchResults.innerHTML = html;
+            
+            // Load images with Intersection Observer for better performance
+            loadImagesLazily();
+        }
+
+        function loadImagesLazily() {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const src = img.getAttribute('data-src');
+                        
+                        // Load the actual image
+                        const imageLoader = new Image();
+                        imageLoader.src = src;
+                        imageLoader.onload = () => {
+                            img.src = src;
+                            img.classList.remove('loading');
+                            img.classList.add('loaded');
+                        };
+                        imageLoader.onerror = () => {
+                            // If the image fails to load, keep the placeholder
+                            img.src = img.getAttribute('src');
+                            img.classList.remove('loading');
+                            img.classList.add('loaded');
+                        };
+                        
+                        observer.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '100px 0px' });
+            
+            document.querySelectorAll('.result-image').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.href) return;
+                    
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    showLoadingSpinner();
+                    
+                    setTimeout(() => {
+                        if (state.loading.minTimeElapsed) {
+                            hideLoadingSpinner();
+                        }
+                    }, CONFIG.LOADING_MIN_TIME);
+                });
+            });
+        }
+
+        function showLoadingSpinner() {
+            elements.loadingSpinner.classList.remove('hidden');
+        }
+
+        function hideLoadingSpinner() {
+            if (state.loading.minTimeElapsed) {
+                elements.loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function showProgressBar() {
+            elements.progressContainer.style.display = 'block';
+            elements.progressBar.style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                elements.progressBar.style.width = `${progress}%`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    elements.progressContainer.style.display = 'none';
+                }
+            }, 100);
+        }
+
+        function minimizeChart() {
+            elements.chartCard.classList.add('minimized');
+        }
+
+        function showResultsContainer() {
+            elements.resultsContainer.style.display = 'block';
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(state.timers.countdown);
+            clearInterval(state.timers.resultsCountdown);
+            clearTimeout(state.timers.marketUpdate);
+            clearTimeout(state.timers.resultsUpdate);
+        });
+    </script>
+</body>
+</html>

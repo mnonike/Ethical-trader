@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings – EthicalTrader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      background: #f5f7fa;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      padding: 1.5rem 1rem;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #00ffcc;
+    }
+
+    .container {
+      padding: 1.5rem 1rem;
+      padding-bottom: 120px;
+    }
+
+    .profile-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(0, 255, 200, 0.5);
+      margin-right: 1rem;
+    }
+
+    .profile-info h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.3rem;
+      color: #0f2027;
+    }
+
+    .profile-info p {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .form-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .form-title {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #0f2027;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .form-control:focus {
+      border-color: #00aa77;
+      outline: none;
+    }
+
+    .image-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #00aa77, #00cc99);
+      color: white;
+      width: 100%;
+    }
+
+    .danger-zone {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #ffcccc;
+    }
+
+    .danger-zone h2 {
+      color: #ff4d4d;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ffcccc;
+      padding-bottom: 0.5rem;
+    }
+
+    .danger-zone p {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-delete {
+      background: #ff4d4d;
+      color: white;
+      width: 100%;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      color: #ff4d4d;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .modal-body {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.8rem;
+    }
+
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-confirm {
+      background: #ff4d4d;
+      color: white;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.8rem 0;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #666;
+      transition: all 0.3s ease;
+      flex: 1;
+      max-width: 20%;
+    }
+
+    .nav-item.active {
+      color: #00aa77;
+      transform: translateY(-3px);
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .nav-item span {
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>Account Settings</h1>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Profile Section -->
+    <div class="profile-section">
+      <div class="profile-header">
+        <img src="" alt="Profile" class="profile-preview" id="profilePreview">
+        <div class="profile-info">
+          <h2 id="profileName">User Name</h2>
+          <p id="profileBusiness">Business Type</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Update Form -->
+    <div class="form-container">
+      <h2 class="form-title">Update Profile</h2>
+      
+      <div class="form-group">
+        <label>Profile Picture</label>
+        <div class="image-upload" onclick="document.getElementById('profilePic').click()">
+          <span>Click to change profile picture</span>
+          <input type="file" id="profilePic" accept="image/*" style="display: none;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" class="form-control" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" class="form-control" placeholder="Enter your phone number" required>
+      </div>
+
+      <div class="form-group">
+        <label for="businessName">Business Name</label>
+        <input type="text" id="businessName" class="form-control" placeholder="Enter your business name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="businessType">Business Type</label>
+        <select id="businessType" class="form-control" required>
+          <option value="retail">Retail</option>
+          <option value="wholesale">Wholesale</option>
+          <option value="manufacturing">Manufacturing</option>
+          <option value="service">Service</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <button class="btn btn-save" onclick="updateProfile()">Save Changes</button>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="danger-zone">
+      <h2>Danger Zone</h2>
+      <p>Deleting your account will permanently remove all your data. This action cannot be undone.</p>
+      <button class="btn btn-delete" onclick="showDeleteModal()">Delete My Account</button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal" id="deleteModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete Account</h2>
+        <button class="btn-close" onclick="hideDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete your account? All your data will be permanently removed.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="hideDeleteModal()">Cancel</button>
+        <button class="btn btn-confirm" onclick="deleteAccount()">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="homepage.html" class="nav-item">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="post-items.html" class="nav-item">
+      <span>📦</span>
+      <span>Inventory</span>
+    </a>
+    <a href="markets.html" class="nav-item">
+      <span>🏪</span>
+      <span>Markets</span>
+    </a>
+    <a href="analysis.html" class="nav-item">
+      <span>📊</span>
+      <span>Analysis</span>
+    </a>
+    <a href="stock-analysis.html" class="nav-item">
+      <span>📈</span>
+      <span>Stock analysis</span>
+    </a>
+    <a href="settings.html" class="nav-item active">
+      <span>⚙️</span>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <script>
+    // Function to convert image to base64
+    function convertImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Load user data when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/user/${currentUser.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentUser.id}`
+                }
+            });
+            const user = await response.json();
+            
+            if (response.ok) {
+                document.getElementById('profilePreview').src = user.profilePic || 'https://via.placeholder.com/80';
+                document.getElementById('profileName').textContent = user.name;
+                document.getElementById('profileBusiness').textContent = user.businessType || 'Business';
+                
+                document.getElementById('name').value = user.name;
+                document.getElementById('email').value = user.email;
+                document.getElementById('phone').value = user.phone || '';
+                document.getElementById('businessName').value = user.businessName;
+                document.getElementById('businessType').value = user.businessType || 'retail';
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    });
+
+    // Update profile function
+    async function updateProfile() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const businessName = document.getElementById('businessName').value;
+        const businessType = document.getElementById('businessType').value;
+        const profilePicInput = document.getElementById('profilePic');
+
+        // Basic validation
+        if (!name || !email || !businessName || !businessType) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        // Convert image to base64 if uploaded
+        let profilePicBase64 = '';
+        if (profilePicInput.files[0]) {
+            try {
+                profilePicBase64 = await convertImageToBase64(profilePicInput.files[0]);
+            } catch (error) {
+                console.error('Error converting image:', error);
+                alert('Error uploading image. Please try again.');
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch(`/api/user/${currentUser.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentUser.id}`
+                },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    phone,
+                    businessName,
+                    businessType,
+                    profilePic: profilePicBase64
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update local storage with new user data
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                document.getElementById('profilePreview').src = data.user.profilePic;
+                document.getElementById('profileName').textContent = data.user.name;
+                document.getElementById('profileBusiness').textContent = data.user.businessType;
+                alert('Profile updated successfully!');
+            } else {
+                alert(data.error || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+
+    // Show delete confirmation modal
+    function showDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    // Hide delete confirmation modal
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Delete account function
+    async function deleteAccount() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/user/${currentUser.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${currentUser.id}`
+                }
+            });
+
+            if (response.ok) {
+                // Clear local storage and redirect to login
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Failed to delete account');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+</script>
+</body>
+</html>

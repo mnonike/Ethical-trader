@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Analysis – EthicalTrader</title>
+  <style>
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      background: #f5f7fa;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      padding: 1.5rem 1rem;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #00ffcc;
+    }
+
+    .container {
+      padding: 1.5rem 1rem;
+      padding-bottom: 120px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #0f2027;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #0f2027;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+
+    .chart {
+      width: 100%;
+      height: 300px;
+      position: relative;
+    }
+
+    .chart-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .chart-label {
+      width: 100px;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .chart-bar-inner {
+      flex-grow: 1;
+      height: 20px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00aa77, #00cc99);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.8rem 0;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #666;
+      transition: all 0.3s ease;
+      flex: 1;
+      max-width: 20%;
+    }
+
+    .nav-item.active {
+      color: #00aa77;
+      transform: translateY(-3px);
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .nav-item span {
+      font-size: 0.7rem;
+    }
+
+    @media (max-width: 600px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>Stock Analysis</h1>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Revenue</h3>
+        <div class="value" id="totalRevenue">₦0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Items Sold</h3>
+        <div class="value" id="totalItemsSold">0</div>
+      </div>
+    </div>
+
+    <!-- Monthly Sales Chart -->
+    <div class="chart-container">
+      <h3 class="chart-title">Monthly Sales</h3>
+      <div class="chart" id="monthlySalesChart">
+        <!-- Chart will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Top Items Chart -->
+    <div class="chart-container">
+      <h3 class="chart-title">Top Selling Items</h3>
+      <div class="chart" id="topItemsChart">
+        <!-- Chart will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="homepage.html" class="nav-item">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="post-items.html" class="nav-item">
+      <span>📦</span>
+      <span>Inventory</span>
+    </a>
+    <a href="markets.html" class="nav-item">
+      <span>🏪</span>
+      <span>Market</span>
+    </a>
+    <a href="analysis.html" class="nav-item">
+      <span>📊</span>
+      <span>Analysis</span>
+    </a>
+    <a href="stock-analysis.html" class="nav-item active">
+      <span>📈</span>
+      <span>Stock analysis</span>
+    </a>
+    <a href="settings.html" class="nav-item">
+      <span>⚙️</span>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <script>
+    // Load analysis data when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/analysis', {
+                headers: {
+                    'Authorization': `Bearer ${currentUser.id}`
+                }
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update stats
+                document.getElementById('totalRevenue').textContent = `₦${data.totalRevenue.toLocaleString()}`;
+                document.getElementById('totalItemsSold').textContent = data.itemsSold.toLocaleString();
+                
+                // Render monthly sales chart
+                renderBarChart('monthlySalesChart', data.monthlySales.labels, data.monthlySales.data, '₦');
+                
+                // Render top items chart
+                renderBarChart('topItemsChart', data.topItems.labels, data.topItems.data, '');
+            }
+        } catch (error) {
+            console.error('Error loading analysis data:', error);
+        }
+    });
+
+    // Function to render a simple bar chart
+    function renderBarChart(containerId, labels, values, prefix = '') {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        const maxValue = Math.max(...values);
+        
+        labels.forEach((label, index) => {
+            const value = values[index] || 0;
+            const percentage = (value / maxValue) * 100;
+            
+            const chartBar = document.createElement('div');
+            chartBar.className = 'chart-bar';
+            
+            chartBar.innerHTML = `
+                <div class="chart-label">${label}</div>
+                <div class="chart-bar-inner">
+                    <div class="chart-bar-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div style="width: 80px; text-align: right; font-size: 0.8rem;">
+                    ${prefix}${value.toLocaleString()}
+                </div>
+            `;
+            
+            container.appendChild(chartBar);
+        });
+    }
+</script>
+</body>
+</html>
