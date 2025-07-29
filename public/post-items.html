@@ -119,6 +119,11 @@
       position: relative;
     }
 
+    .image-upload:hover {
+      border-color: #00aa77;
+      background-color: #f5f7fa;
+    }
+
     .image-preview {
       width: 120px;
       height: 120px;
@@ -140,6 +145,10 @@
       cursor: pointer;
       margin-top: 1rem;
       transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #00885e, #00aa77);
     }
 
     .btn-submit:disabled {
@@ -414,7 +423,7 @@
       }, duration);
     }
 
-    // Improved image upload handler
+    // Simplified image upload handler that accepts any image file
     function handleImageUpload(event) {
       const file = event.target.files[0];
       const output = document.getElementById('imagePreview');
@@ -425,28 +434,25 @@
       // Reset error state
       errorElement.style.display = 'none';
       
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        errorElement.textContent = 'Image size should be less than 5MB';
+      // Check if file is an image (basic check)
+      if (!file.type.startsWith('image/')) {
+        errorElement.textContent = 'Please select an image file';
         errorElement.style.display = 'block';
-        showToast('Image size should be less than 5MB', 'error');
+        showToast('Please select an image file', 'error');
         return;
       }
       
-      // Validate file type (any image format)
-      if (!file.type.match('image.*')) {
-        errorElement.textContent = 'Please upload an image file';
-        errorElement.style.display = 'block';
-        showToast('Please upload an image file', 'error');
-        return;
-      }
-      
-      // Create preview
+      // Create preview regardless of file size or type
       const reader = new FileReader();
       reader.onload = function(e) {
         output.src = e.target.result;
         output.style.display = 'block';
         event.target.parentElement.querySelector('span').textContent = 'Change Image';
+      };
+      reader.onerror = function() {
+        errorElement.textContent = 'Error loading image';
+        errorElement.style.display = 'block';
+        showToast('Error loading image', 'error');
       };
       reader.readAsDataURL(file);
     }
@@ -454,9 +460,17 @@
     // Function to convert image to base64 with better error handling
     function convertImageToBase64(file) {
       return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve(''); // Resolve with empty string if no file
+          return;
+        }
+        
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(new Error('Failed to read image file'));
+        reader.onerror = error => {
+          console.error('Image read error:', error);
+          reject(new Error('Failed to read image file'));
+        };
         reader.readAsDataURL(file);
       });
     }
@@ -535,16 +549,16 @@
 
       try {
         // Convert image to base64 if uploaded
-        let itemImageBase64 = '';
         const imageFile = document.getElementById('itemImage').files[0];
+        let itemImageBase64 = '';
         
         if (imageFile) {
           try {
             itemImageBase64 = await convertImageToBase64(imageFile);
           } catch (error) {
             console.error('Image conversion error:', error);
-            showToast('Failed to process image. Please try another image.', 'error');
-            return;
+            showToast('Failed to process image. The item will be saved without an image.', 'warning');
+            itemImageBase64 = ''; // Continue without image
           }
         }
 
