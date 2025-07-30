@@ -117,11 +117,12 @@
       margin-bottom: 1rem;
       cursor: pointer;
       position: relative;
+      transition: all 0.3s ease;
     }
 
     .image-upload:hover {
       border-color: #00aa77;
-      background-color: #f5f7fa;
+      background-color: #f8fafc;
     }
 
     .image-preview {
@@ -130,7 +131,13 @@
       border-radius: 8px;
       object-fit: cover;
       margin-top: 1rem;
-      display: none;
+      border: 1px solid #eee;
+    }
+
+    .upload-icon {
+      font-size: 2rem;
+      color: #00aa77;
+      margin-bottom: 0.5rem;
     }
 
     .btn-submit {
@@ -149,11 +156,15 @@
 
     .btn-submit:hover {
       background: linear-gradient(135deg, #00885e, #00aa77);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 170, 119, 0.2);
     }
 
     .btn-submit:disabled {
       background: #cccccc;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .loading-spinner {
@@ -307,9 +318,10 @@
       <form id="inventoryForm">
         <div class="form-group">
           <label for="itemImage">Item Image</label>
-          <div class="image-upload" onclick="document.getElementById('itemImage').click()">
+          <div class="image-upload" id="imageUploadArea" onclick="document.getElementById('itemImage').click()">
+            <div class="upload-icon">📷</div>
             <span>Click to upload image</span>
-            <img id="imagePreview" class="image-preview" src="#" alt="Preview">
+            <img id="imagePreview" class="image-preview" src="" alt="Preview">
             <input type="file" id="itemImage" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
             <div id="imageError" class="error-message"></div>
           </div>
@@ -423,55 +435,79 @@
       }, duration);
     }
 
-    // Simplified image upload handler that accepts any image file
+    // Enhanced image upload handler with better error handling
     function handleImageUpload(event) {
       const file = event.target.files[0];
       const output = document.getElementById('imagePreview');
       const errorElement = document.getElementById('imageError');
+      const uploadArea = document.getElementById('imageUploadArea');
       
-      if (!file) return;
-      
-      // Reset error state
+      // Reset previous state
       errorElement.style.display = 'none';
+      uploadArea.style.borderColor = '#ddd';
       
-      // Check if file is an image (basic check)
+      if (!file) {
+        return;
+      }
+
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        errorElement.textContent = 'Image size should be less than 10MB';
+        errorElement.style.display = 'block';
+        uploadArea.style.borderColor = '#e74c3c';
+        showToast('Image too large. Max 10MB allowed.', 'error');
+        return;
+      }
+
+      // Check for image type (more lenient check)
       if (!file.type.startsWith('image/')) {
         errorElement.textContent = 'Please select an image file';
         errorElement.style.display = 'block';
-        showToast('Please select an image file', 'error');
+        uploadArea.style.borderColor = '#e74c3c';
+        showToast('Please select a valid image file', 'error');
         return;
       }
-      
-      // Create preview regardless of file size or type
+
+      // Create preview
       const reader = new FileReader();
       reader.onload = function(e) {
         output.src = e.target.result;
-        output.style.display = 'block';
-        event.target.parentElement.querySelector('span').textContent = 'Change Image';
+        uploadArea.querySelector('span').textContent = file.name;
+        uploadArea.querySelector('.upload-icon').textContent = '🖼️';
       };
       reader.onerror = function() {
-        errorElement.textContent = 'Error loading image';
+        errorElement.textContent = 'Error loading image. Please try another file.';
         errorElement.style.display = 'block';
+        uploadArea.style.borderColor = '#e74c3c';
         showToast('Error loading image', 'error');
       };
       reader.readAsDataURL(file);
     }
 
-    // Function to convert image to base64 with better error handling
+    // Robust image to base64 conversion
     function convertImageToBase64(file) {
       return new Promise((resolve, reject) => {
         if (!file) {
-          resolve(''); // Resolve with empty string if no file
+          resolve(null);
           return;
         }
-        
+
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => {
-          console.error('Image read error:', error);
+        reader.onload = () => {
+          // More lenient validation of the result
+          if (typeof reader.result === 'string' && reader.result.length > 0) {
+            resolve(reader.result);
+          } else {
+            reject(new Error('Invalid image data'));
+          }
+        };
+        reader.onerror = () => {
           reject(new Error('Failed to read image file'));
         };
         reader.readAsDataURL(file);
+      }).catch(error => {
+        console.warn('Image conversion warning:', error.message);
+        return null; // Return null instead of failing
       });
     }
 
@@ -486,7 +522,7 @@
       });
     });
 
-    // Form submission with improved error handling
+    // Form submission with enhanced image handling
     document.getElementById('inventoryForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
@@ -550,15 +586,12 @@
       try {
         // Convert image to base64 if uploaded
         const imageFile = document.getElementById('itemImage').files[0];
-        let itemImageBase64 = '';
+        let itemImageBase64 = null;
         
         if (imageFile) {
-          try {
-            itemImageBase64 = await convertImageToBase64(imageFile);
-          } catch (error) {
-            console.error('Image conversion error:', error);
-            showToast('Failed to process image. The item will be saved without an image.', 'warning');
-            itemImageBase64 = ''; // Continue without image
+          itemImageBase64 = await convertImageToBase64(imageFile);
+          if (!itemImageBase64) {
+            showToast('Proceeding without image due to conversion issue', 'warning');
           }
         }
 
@@ -597,8 +630,10 @@
         
         // Reset form
         this.reset();
-        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('imagePreview').src = '';
         document.querySelector('.image-upload span').textContent = 'Click to upload image';
+        document.querySelector('.upload-icon').textContent = '📷';
+        document.getElementById('itemImage').value = '';
       } catch (error) {
         console.error('Error:', error);
         showToast(error.message || 'An error occurred. Please try again.', 'error');
@@ -650,5 +685,4 @@
     // Load initial data when page loads
     document.addEventListener('DOMContentLoaded', loadInitialData);
   </script>
-</body>
-</html>
+</body
