@@ -1,7 +1,6 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
@@ -9,8 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -38,24 +37,35 @@ const writeJSON = (file, data) => {
 const saveBase64Image = (base64String, folder, filename) => {
   if (!base64String) return null;
   
-  const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-  if (!matches || matches.length !== 3) return null;
-  
-  const mimeType = matches[1];
-  const extensions = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'image/svg+xml': 'svg'
-  };
-  const fileExt = extensions[mimeType.toLowerCase()] || 'jpg';
-  
+  // More lenient base64 string checking
+  const base64Data = base64String.split(';base64,').pop();
+  if (!base64Data) return null;
+
+  // Default to jpeg if we can't determine type
+  let fileExt = 'jpg';
+  let mimeType = 'image/jpeg';
+
+  // Try to extract mime type if present
+  if (base64String.startsWith('data:')) {
+    const mimeMatch = base64String.match(/^data:(image\/\w+);/);
+    if (mimeMatch && mimeMatch[1]) {
+      mimeType = mimeMatch[1];
+      const extensions = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg'
+      };
+      fileExt = extensions[mimeType.toLowerCase()] || 'jpg';
+    }
+  }
+
   const filePath = path.join(__dirname, 'uploads', folder, `${filename}.${fileExt}`);
   
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, matches[2], 'base64');
+    fs.writeFileSync(filePath, base64Data, 'base64');
     return `/uploads/${folder}/${filename}.${fileExt}`;
   } catch (err) {
     console.error('Error saving image:', err);
@@ -276,10 +286,8 @@ app.get('/api/admin/users/:id', (req, res) => {
 // Delete user (for admin)
 app.delete('/api/admin/users/:id', (req, res) => {
   try {
-    // First delete all associated files
     deleteUserFiles(req.params.id);
 
-    // Then remove from databases
     let users = readJSON('users.json');
     users = users.filter(u => u.id !== req.params.id);
     writeJSON('users.json', users);
@@ -319,9 +327,7 @@ app.put('/api/user/:id', authenticate, (req, res) => {
       ...req.body
     };
 
-    // Handle profile picture update
     if (req.body.profilePic) {
-      // Delete old profile picture if it exists and isn't a URL
       if (users[userIndex].profilePic && !users[userIndex].profilePic.startsWith('http')) {
         deleteFile(users[userIndex].profilePic);
       }
@@ -341,10 +347,8 @@ app.put('/api/user/:id', authenticate, (req, res) => {
 // Delete user account
 app.delete('/api/user/:id', authenticate, (req, res) => {
   try {
-    // First delete all associated files
     deleteUserFiles(req.params.id);
 
-    // Then remove from databases
     let users = readJSON('users.json');
     users = users.filter(u => u.id !== req.params.id);
     writeJSON('users.json', users);
@@ -431,9 +435,7 @@ app.put('/api/items/:id', authenticate, (req, res) => {
       ...req.body
     };
 
-    // Handle item image update
     if (req.body.itemImage) {
-      // Delete old image if it exists and isn't a URL
       if (items[itemIndex].itemImage && !items[itemIndex].itemImage.startsWith('http')) {
         deleteFile(items[itemIndex].itemImage);
       }
@@ -460,17 +462,14 @@ app.delete('/api/items/:id', authenticate, (req, res) => {
       return res.status(404).json({ error: 'Item not found' });
     }
 
-    // Delete item image if it exists
     const itemToDelete = items[itemIndex];
     if (itemToDelete.itemImage) {
       deleteFile(itemToDelete.itemImage);
     }
 
-    // Remove from items database
     const updatedItems = items.filter(item => item.id !== req.params.id);
     writeJSON('items.json', updatedItems);
 
-    // Remove from activities database
     let activities = readJSON('activities.json');
     activities = activities.filter(act => act.itemId !== req.params.id);
     writeJSON('activities.json', activities);
